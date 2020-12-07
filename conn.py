@@ -93,6 +93,7 @@ def db_createSchema(connection):
         return True
 
 def db_query(connection, sql):
+    logger = log.log()
     try:
         with connection.cursor() as cursor:
             cursor.execute(sql) #, ('webmaster@python.org', 'very-secret'))
