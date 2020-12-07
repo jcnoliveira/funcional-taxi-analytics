@@ -30,6 +30,17 @@ def copy(connection):
         logger.debug('funcional schema created')
         connection.commit()
         logger.debug('schema creation commited')
+
+
+
+    sql = """copy funcional.vendor
+            from 's3://data-funcional-teste/data/data-vendor_lookup-csv.csv' 
+            iam_role 'arn:aws:iam::819120498720:role/RedshiftAccessS3' 
+            IGNOREHEADER 1 
+            csv;"""
+    cursor.execute(sql)
+    logger.debug('funcional schema created')
+    connection.commit()
     #except:
     #    logger.error('problem on create schema process')
 
