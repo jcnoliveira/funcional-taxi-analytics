@@ -1,6 +1,11 @@
 import pymysql.cursors
+import datetime
+import log
 
 def db_createConnection():
+    logger = log.log()
+    
+
     try:
         # Connect to the database
         connection = pymysql.connect(host='funcionaldb.cf0vlrdfbqsd.us-east-1.rds.amazonaws.com',
@@ -8,6 +13,7 @@ def db_createConnection():
                                     password='12345678',
                                     charset='utf8',
                                     cursorclass=pymysql.cursors.DictCursor)
+        logger.debug('connection created')
     except:
         print("error")
         pass
@@ -72,5 +78,12 @@ def db_createSchema(connection):
 #            cursor.execute(sql, ('webmaster@python.org',))
 #            result = cursor.fetchone()
 #            print(result)
+    finally:
+        return True
+
+def db_query(connection, sql):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(sql) #, ('webmaster@python.org', 'very-secret'))
     finally:
         return True
