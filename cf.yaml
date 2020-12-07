@@ -21,8 +21,9 @@ Parameters:
   NodeType:
     Description: The type of node to be provisioned
     Type: String
-    Default: ds2.xlarge
+    Default: dc2.large
     AllowedValues:
+    - dc2.large
     - ds2.xlarge
     - ds2.8xlarge
     - dc1.large
@@ -71,10 +72,10 @@ Resources:
         Ref: NodeType
       DBName:
         Ref: DatabaseName
-      MasterUsername:
-        Ref: MasterUsername
-      MasterUserPassword:
-        Ref: MasterUserPassword
+      MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref RedshiftSecret, ':SecretString:username}}' ]]
+        #Ref: MasterUsername
+      MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref RedshiftSecret, ':SecretString:password}}' ]]
+        #Ref: MasterUserPassword
       ClusterParameterGroupName:
         Ref: RedshiftClusterParameterGroup
       VpcSecurityGroupIds:
@@ -152,6 +153,18 @@ Resources:
         Ref: PublicSubnet
       RouteTableId:
         Ref: PublicRouteTable
+
+
+  RedshiftSecret:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: RedshiftSecret
+      Description: "This secret has a dynamically generated secret password."
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "awsuser"}'
+        GenerateStringKey: "password"
+        PasswordLength: 10
+        ExcludeCharacters: '"@/\$#%&*()_-=+!?'
 Outputs:
   ClusterEndpoint:
     Description: Cluster endpoint

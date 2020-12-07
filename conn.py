@@ -2,21 +2,32 @@ import pymysql.cursors
 import datetime
 import log
 import psycopg2
+import os
+import json
+import boto3
 
 
 def db_createConnection():
     logger = log.log()
-    try:
-        DB_HOST=''
-        DB_NAME=''
-        DB_PORT=''
-        DB_USER='admin'
-        DB_PWD='12345678'
-        conn_string = "dbname='{}' port='{}' host='{}' user='{}' password='{}'".format(DB_NAME, DB_PORT, DB_HOST, DB_USER, DB_PWD)
-        connection = psycopg2.connect(conn_string)
-        logger.debug('connection created')
-    except:
-        logger.error('problem on connection')
+    #try:
+    client = boto3.client('secretsmanager')
+    response = client.get_secret_value(SecretId='RedshiftSecret')
+    response = json.loads(response["SecretString"])                  
+    #if os.environ['DB_HOST'] == "":
+    if "DB_HOST" in os.environ:
+        DB_HOST = os.environ['HOME']
+    else:
+        DB_HOST = "funcionalcf-redshiftcluster-hg42toiuq7v2.cym24i1ilzer.us-east-1.redshift.amazonaws.com"
+        
+    DB_NAME='dev'
+    DB_PORT='5439'
+    DB_USER= response["username"]
+    DB_PWD= response["password"]
+    conn_string = "dbname='{}' port='{}' host='{}' user='{}' password='{}'".format(DB_NAME, DB_PORT, DB_HOST, DB_USER, DB_PWD)
+    connection = psycopg2.connect(conn_string)
+    logger.debug('connection created')
+    #except:
+     #   logger.error('problem on connection')
 
     db_createSchema(connection)
     db_createTables(connection)
@@ -78,27 +89,16 @@ def db_createTables(connection):
 
 def db_createSchema(connection):
     logger = log.log()
-    try:
-        cursor = connection.cursor()
-        sql = "CREATE SCHEMA IF NOT EXISTS funcional;"
-        cursor.execute(sql)
-        logger.debug('funcional schema created')
-        connection.commit()
-        logger.debug('schema creation commited')
+    #try:
+    cursor = connection.cursor()
+    sql = "CREATE SCHEMA IF NOT EXISTS funcional;"
+    cursor.execute(sql)
+    logger.debug('funcional schema created')
+    connection.commit()
+    logger.debug('schema creation commited')
 
-    except:
-        logger.error('problem on create schema process')
+    #except:
+    #   logger.error('problem on create schema process')
 
-    finally:
-        return True
-
-def db_query(connection, sql):
-    logger = log.log()
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(sql) #, ('webmaster@python.org', 'very-secret'))
-            result = cursor.fetchone()
-            return result
-    except:
-        logger.error('problem on query')
-
+    #finally:
+    #    return True
