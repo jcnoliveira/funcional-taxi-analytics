@@ -1,7 +1,7 @@
 # Funcional-Taxi Analytics
 
 
-## Projeto - Ambiente de extração de dados do Twitter
+## Projeto - Análise de dados corridas de táxi em NY
 
 Essa é uma arquitetura que importa dados do S3 para uma instancia de Redshift, ulizando a instrução COPY.
 Toda a parte de credenciais está dinamica, ou seja, sem senhas fixas, utilizando o Secrets Manager como fonte de autenticação.
