@@ -21,6 +21,9 @@ Parameters:
   Bucket:
     Type: String
     Default: 'data-funcional-teste'
+  FilesPath:
+    Type: String
+    Description: Inform the data key in s3, example data/partofname
   NodeType:
     Description: The type of node to be provisioned
     Type: String

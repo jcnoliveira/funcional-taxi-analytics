@@ -51,3 +51,8 @@ Arquivo com o dashboard extraido do metabase com os gráficos.
 ##### dataimport.py, conn.py e log.py
 
 Arquivos python que serão executados no lambda.
+
+
+## Rollout! Implantação
+
+1. Nesse momento, a subida do zip do lambda ainda não está automatizada.
