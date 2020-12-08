@@ -34,3 +34,20 @@ Serviço responsavel por armazenar e fornecer, de modo seguro, as credenciais do
 Ferramenta de data visualization.
 
 
+## Arquivos
+
+##### cf.yaml
+
+Arquivo com o cloudformation do projeto. Detalhes da utilização na proxima parte.
+
+##### queries.sql
+
+Arquivo com as queries SQL utilizadas para obter as informações solicitadas. Foram utilizadas no metabase para gerar os relatorios.
+
+##### Personal - NYC Taxi Analytics · Dashboard · Metabase.pdf
+
+Arquivo com o dashboard extraido do metabase com os gráficos.
+
+##### dataimport.py, conn.py e log.py
+
+Arquivos python que serão executados no lambda.
