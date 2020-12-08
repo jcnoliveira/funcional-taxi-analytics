@@ -74,3 +74,10 @@ Pegue o arquivo cf.yaml e suba a stack no serviço do cloudformation.
 
 3. Execute o lambda a partir do console AWS.
 
+4. As credenciais foram armazenadas no Secret Manager, você pode recupera-las lá.
+
+5. Suba uma ferramenta de visualização de dados de sua preferência.
+Exemplo:
+```
+docker run -d -p 3000:3000 --name metabase metabase/metabase
+```
