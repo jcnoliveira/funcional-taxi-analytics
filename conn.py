@@ -1,4 +1,3 @@
-import pymysql.cursors
 import datetime
 import log
 import psycopg2
@@ -10,12 +9,14 @@ import boto3
 def db_createConnection():
     logger = log.log()
     #try:
+    logger.debug('secret manager')
     client = boto3.client('secretsmanager')
     response = client.get_secret_value(SecretId='RedshiftSecret')
     response = json.loads(response["SecretString"])                  
-    #if os.environ['DB_HOST'] == "":
+    logger.debug('secret manager ok')
     if "DB_HOST" in os.environ:
-        DB_HOST = os.environ['HOME']
+        DB_HOST = os.environ['DB_HOST']
+        logger.debug('DB_HOST set')
     else:
         DB_HOST = "funcionalcf-redshiftcluster-hg42toiuq7v2.cym24i1ilzer.us-east-1.redshift.amazonaws.com"
         
@@ -23,7 +24,9 @@ def db_createConnection():
     DB_PORT='5439'
     DB_USER= response["username"]
     DB_PWD= response["password"]
+    logger.debug('building conn string')
     conn_string = "dbname='{}' port='{}' host='{}' user='{}' password='{}'".format(DB_NAME, DB_PORT, DB_HOST, DB_USER, DB_PWD)
+    logger.debug('connecting...')
     connection = psycopg2.connect(conn_string)
     logger.debug('connection created')
     #except:

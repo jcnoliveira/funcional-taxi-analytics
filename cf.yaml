@@ -18,6 +18,9 @@ Parameters:
       the NumberOfNodes parameter must be greater than 1
     Type: Number
     Default: '1'
+  Bucket:
+    Type: String
+    Default: 'data-funcional-teste'
   NodeType:
     Description: The type of node to be provisioned
     Type: String
@@ -46,9 +49,15 @@ Conditions:
     - Ref: ClusterType
     - multi-node
 Resources:
+
+#########################################################
+# Redshift
+#########################################################
   RedshiftCluster:
     Type: AWS::Redshift::Cluster
-    DependsOn: AttachGateway
+    DependsOn: 
+      - AttachGateway
+      - RoleRedshiftS3
     Properties:
       ClusterType:
         Ref: ClusterType
@@ -62,9 +71,7 @@ Resources:
       DBName:
         Ref: DatabaseName
       MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref RedshiftSecret, ':SecretString:username}}' ]]
-        #Ref: MasterUsername
       MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref RedshiftSecret, ':SecretString:password}}' ]]
-        #Ref: MasterUserPassword
       ClusterParameterGroupName:
         Ref: RedshiftClusterParameterGroup
       VpcSecurityGroupIds:
@@ -74,6 +81,8 @@ Resources:
       PubliclyAccessible: 'true'
       Port:
         Ref: PortNumber
+      #IamRoles: 
+      #  - Ref: RoleRedshiftS3
   RedshiftClusterParameterGroup:
     Type: AWS::Redshift::ClusterParameterGroup
     Properties:
@@ -88,6 +97,11 @@ Resources:
       Description: Cluster subnet group
       SubnetIds:
       - Ref: PublicSubnet
+
+#########################################################
+# VPC
+#########################################################
+
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -143,6 +157,9 @@ Resources:
       RouteTableId:
         Ref: PublicRouteTable
 
+#########################################################
+# Secrets Manager
+#########################################################
 
   RedshiftSecret:
     Type: 'AWS::SecretsManager::Secret'
@@ -154,6 +171,115 @@ Resources:
         GenerateStringKey: "password"
         PasswordLength: 10
         ExcludeCharacters: '"@/\$#%&*()_-=+!?'
+
+#########################################################
+# lambda
+#########################################################
+  LambdaMigration:
+    Type: AWS::Lambda::Function
+    DependsOn: 
+      - RoleLambda
+    Properties:
+      Handler: dataimport.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: !Ref Bucket
+        S3Key: lambda/package.zip
+      Description: ''
+      MemorySize: 128
+      Timeout: 600
+      Role: !GetAtt RoleLambda.Arn
+      Environment:
+        Variables:
+          DB_HOST: !Sub "${RedshiftCluster.Endpoint.Address}"
+      VpcConfig: 
+        SecurityGroupIds: 
+          - !Ref SecurityGroup
+        SubnetIds: 
+          - !Ref PublicSubnet
+#########################################################
+# Roles
+#########################################################
+  RoleRedshiftS3:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+      RoleName: RoleRedshiftS3
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: "redshift.amazonaws.com"
+            Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+      - PolicyName: PolicyRedshiftS3
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action: ["ec2:DescribeVpcs","ec2:DescribeSubnets","ec2:DescribeNetworkInterfaces","ec2:DescribeAddresses","ec2:AssociateAddress",
+                     "ec2:DisassociateAddress","ec2:CreateNetworkInterface","ec2:DeleteNetworkInterface","ec2:ModifyNetworkInterfaceAttribute","ec2:CreateVpcEndpoint",
+                     "ec2:DeleteVpcEndpoints","ec2:DescribeVpcEndpoints",ec2:ModifyVpcEndpoint", "secretsmanager:GetSecretValue"]
+            Resource: '*'
+
+
+  RoleLambda:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: RoleLambda
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [lambda.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+      - PolicyName: PolicyLambdas2
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateNetworkInterface'
+              - 'ec2:DescribeNetworkInterfaces'
+              - 'ec2:DeleteNetworkInterface'
+              - 'ec2:DescribeSecurityGroups'
+              - 'ec2:DescribeSubnets'
+              - 'ec2:DescribeVpcs'
+              - 'secretsmanager:GetSecretValue'
+              - 'execute-api:Invoke'
+              - 'execute-api:ManageConnections'
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+              - 'iam:GetRole'
+              - 'iam:PassRole'
+              - 's3:Get*'
+              - 's3:List*'
+            Resource:       
+              - '*'
+
+
+  PolicyVpcLambdas:
+    Type: 'AWS::IAM::Policy'
+    DependsOn: 
+      - RoleLambda
+    Properties:
+      PolicyName: PolicyVpcLambdas
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateNetworkInterface'
+              - 'ec2:DescribeSubnets'
+              - 'ec2:DescribeVpcs'
+            Resource: 
+              - '*'
+      Roles:
+        - RoleLambda
+
 Outputs:
   ClusterEndpoint:
     Description: Cluster endpoint
