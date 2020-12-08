@@ -56,3 +56,21 @@ Arquivos python que serão executados no lambda.
 ## Rollout! Implantação
 
 1. Nesse momento, a subida do zip do lambda ainda não está automatizada.
+O projeto possui apenas uma dependencia, a Lib Pycopg2 postgre para se conectar ao Redshift.
+
+```
+pip install aws-psycopg2 --target ./package
+```
+
+Copie e cole na pasta /package os 3 arquivos do lambda (dataimport.py, conn.py e log.py)
+
+Faça um zip com os arquivos da pasta.
+ATENÇÃO - Não zipe a pasta, zipe os arquivos dentro dela!!
+
+Faça upload para o bucket S3 s3://BUCKET/lambda/package.zip
+
+2. Cloudformation
+Pegue o arquivo cf.yaml e suba a stack no serviço do cloudformation.
+
+3. Execute o lambda a partir do console AWS.
+
